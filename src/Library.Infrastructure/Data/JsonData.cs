@@ -209,4 +209,19 @@ public class JsonData
         }
     }
 
+    // Add this method to search for books by title (case-insensitive)
+    public List<Book> SearchBooksByTitle(string title)
+    {
+        if (Books == null)
+            return new List<Book>();
+        return Books
+            .Where(b => b.Title.Equals(title, StringComparison.OrdinalIgnoreCase))
+            .ToList();
+    }
+
+    public Book? SearchBookByTitle(string title)
+    {
+        return Books?.FirstOrDefault(b => b.Title.Equals(title, StringComparison.OrdinalIgnoreCase));
+    }
+
 }
