@@ -1,4 +1,4 @@
-﻿using System.Text.Json;
+using System.Text.Json;
 using Library.ApplicationCore.Entities;
 using Microsoft.Extensions.Configuration;
 
@@ -95,111 +95,53 @@ public class JsonData
         return populated;
     }
 
-    public Patron GetPopulatedPatron(Patron p)
+    public Patron GetPopulatedPatron(Patron p) => new()
     {
-        Patron populated = new Patron
-        {
-            Id = p.Id,
-            Name = p.Name,
-            ImageName = p.ImageName,
-            MembershipStart = p.MembershipStart,
-            MembershipEnd = p.MembershipEnd,
-            Loans = new List<Loan>()
-        };
+        Id = p.Id,
+        Name = p.Name,
+        ImageName = p.ImageName,
+        MembershipStart = p.MembershipStart,
+        MembershipEnd = p.MembershipEnd,
+        Loans = Loans!
+            .Where(loan => loan.PatronId == p.Id)
+            .Select(GetPopulatedLoan)
+            .ToList(),
+    };
 
-        foreach (Loan loan in Loans!)
-        {
-            if (loan.PatronId == p.Id)
-            {
-                populated.Loans.Add(GetPopulatedLoan(loan));
-            }
-        }
-
-        return populated;
-    }
-
-    public Loan GetPopulatedLoan(Loan l)
+    public Loan GetPopulatedLoan(Loan l) => new()
     {
-        Loan populated = new Loan
-        {
-            Id = l.Id,
-            BookItemId = l.BookItemId,
-            PatronId = l.PatronId,
-            LoanDate = l.LoanDate,
-            DueDate = l.DueDate,
-            ReturnDate = l.ReturnDate
-        };
+        Id = l.Id,
+        BookItemId = l.BookItemId,
+        PatronId = l.PatronId,
+        LoanDate = l.LoanDate,
+        DueDate = l.DueDate,
+        ReturnDate = l.ReturnDate,
+        BookItem = GetPopulatedBookItem(BookItems!.Single(bi => bi.Id == l.BookItemId)),
+        Patron = Patrons!.Single(p => p.Id == l.PatronId)
+    };
 
-        foreach (BookItem bi in BookItems!)
-        {
-            if (bi.Id == l.BookItemId)
-            {
-                populated.BookItem = GetPopulatedBookItem(bi);
-                break;
-            }
-        }
-
-        foreach (Patron p in Patrons!)
-        {
-            if (p.Id == l.PatronId)
-            {
-                populated.Patron = p;
-                break;
-            }
-        }
-
-        return populated;
-    }
-
-    public BookItem GetPopulatedBookItem(BookItem bi)
+    public BookItem GetPopulatedBookItem(BookItem bi) => new()
     {
-        BookItem populated = new BookItem
-        {
-            Id = bi.Id,
-            BookId = bi.BookId,
-            AcquisitionDate = bi.AcquisitionDate,
-            Condition = bi.Condition
-        };
+        Id = bi.Id,
+        BookId = bi.BookId,
+        AcquisitionDate = bi.AcquisitionDate,
+        Condition = bi.Condition,
+        Book = GetPopulatedBook(Books!.Single(b => b.Id == bi.BookId))
+    };
 
-        foreach (Book b in Books!)
-        {
-            if (b.Id == bi.BookId)
-            {
-                populated.Book = GetPopulatedBook(b);
-                break;
-            }
-        }
-
-        return populated;
-    }
-
-    public Book GetPopulatedBook(Book b)
+    public Book GetPopulatedBook(Book b) => new()
     {
-        Book populated = new Book
-        {
-            Id = b.Id,
-            Title = b.Title,
-            AuthorId = b.AuthorId,
-            Genre = b.Genre,
-            ISBN = b.ISBN,
-            ImageName = b.ImageName
-        };
-
-        foreach (Author a in Authors!)
-        {
-            if (a.Id == b.AuthorId)
-            {
-                populated.Author = new Author
-                {
-                    Id = a.Id,
-                    Name = a.Name
-                };
-                break;
-            }
-        }
-
-        return populated;
-    }
+        Id = b.Id,
+        Title = b.Title,
+        AuthorId = b.AuthorId,
+        Genre = b.Genre,
+        ISBN = b.ISBN,
+        ImageName = b.ImageName,
+        Author = Authors!
+            .Where(a => a.Id == b.AuthorId)
+            .Select(a => new Author { Id = a.Id, Name = a.Name })
+            .First()
+    };
 
     private async Task<T?> LoadJson<T>(string filePath)
     {
